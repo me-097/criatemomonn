@@ -1,0 +1,98 @@
+
+.F1 {
+    position: relative;
+    top: 70px;
+    left: 10px;
+    width: 15em;
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 12px 32px;
+    font-size: 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+.F1:hover {
+  background: #0056b3;
+  transform: translateY(-2px);
+}
+.F1:active {
+  transform: translateY(0);
+}
+
+
+.F2 {
+    position: relative;
+    top: 120px;
+    left: 10px;
+    width: 15em;
+    position:absolute;
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 12px 32px;
+    font-size: 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+.F2:hover {
+  background: #0056b3;
+  transform: translateY(-2px);
+}
+.F2:active {
+  transform: translateY(0);
+}
+
+
+.F3 {
+    position: relative;
+    top: 170px;
+    left: 10px;
+    width: 15em;
+    position:absolute;
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 12px 32px;
+    font-size: 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+.F3:hover {
+  background: #0056b3;
+  transform: translateY(-2px);
+}
+.F3:active {
+  transform: translateY(0);
+}
+
+
+.F4 {
+    position: relative;
+    top: 220px;
+    left: 10px;
+    width: 15em;
+    position:absolute;
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 12px 32px;
+    font-size: 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+.F4:hover {
+  background: #0056b3;
+  transform: translateY(-2px);
+}
+.F4:active {
+  transform: translateY(0);
+}
