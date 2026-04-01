@@ -1,0 +1,78 @@
+# criatemomonn
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>hkd</title>
+    <link rel="stylesheet" href="map.css">
+
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+    </style>
+
+    <button class="F1">F1</button>
+    <button class="F2">F2</button>
+    <button class="F3">F3</button>
+    <button class="F4">F4</button>
+
+</head>
+<body>
+
+    <canvas id="MapCanvas"></canvas>
+
+    <script type="importmap">
+        {
+            "imports":{
+                "three": "https://cdn.jsdelivr.net/npm/three@0.182.0/build/three.webgpu.js",
+                "three/webgpu": "https://cdn.jsdelivr.net/npm/three@0.182.0/build/three.webgpu.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.182.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+
+        import * as THREE from "three/webgpu";
+        import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+        import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+
+        const renderer = new THREE.WebGPURenderer({
+            canvas: document.querySelector("#MapCanvas")
+        });
+
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize( innerWidth, innerHeight);
+        renderer.setAnimationLoop(animation);
+
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x000000);
+
+        const camera = new THREE.PerspectiveCamera(45, innerWidth/ innerHeight);
+        camera.position.set(0, 0, 1000);
+        const controls = new OrbitControls(camera, document.body);
+
+
+        const loader = new GLTFLoader();
+        
+        const gltf = await loader.loadAsync("../3D/map1.glb");
+        const model = gltf.scene;
+        scene.add(model);
+        model.scale.set(30,30,30);
+
+
+        const directionalLight = new THREE.DirectionalLight(0xFFFFFF);
+        directionalLight.position.set(1, 1, 1);
+        scene.add(directionalLight);
+
+        function animation(){
+            renderer.render(scene,camera);
+        }
+
+
+    </script>
+</body>
+</html>
