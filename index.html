@@ -1,78 +1,500 @@
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>hkd</title>
-    <link rel="stylesheet" href="map.css">
-
+    <meta charset="utf-8">
+    <title>学校祭マップ 2026</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --bg:      #eef1f7;
+            --sky1:    #c8d8f0;
+            --sky2:    #dde8f8;
+            --panel:   rgba(255,255,255,0.72);
+            --border:  rgba(0,0,0,0.08);
+            --accent:  #2563eb;
+            --accent2: #f97316;
+            --text:    #1a1f2e;
+            --muted:   rgba(26,31,46,0.45);
+            --shadow:  0 4px 24px rgba(0,0,0,0.10);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
         body {
-            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'DM Sans', 'Noto Sans JP', sans-serif;
+            overflow: hidden;
+            height: 100vh; width: 100vw;
+        }
+
+        /* ── 3D canvas ── */
+        #three {
+            position: fixed;
+            inset: 0;
+            z-index: 1;
+        }
+
+        /* ── ローディング ── */
+        #loading {
+            position: fixed; inset: 0; z-index: 300;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            gap: 28px;
+            background: linear-gradient(160deg, #dde8f8 0%, #eef1f7 60%, #fdf0e8 100%);
+            transition: opacity 0.7s ease;
+        }
+        #loading-logo {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 72px;
+            letter-spacing: 10px;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1;
+        }
+        #loading-sub {
+            font-size: 11px;
+            letter-spacing: 5px;
+            color: var(--muted);
+            text-transform: uppercase;
+            margin-top: -20px;
+        }
+        #loading-bar-track {
+            width: 240px; height: 2px;
+            background: rgba(0,0,0,0.1);
+            border-radius: 2px;
             overflow: hidden;
         }
+        #loading-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 2px;
+        }
+        #loading-percent {
+            font-size: 12px;
+            letter-spacing: 3px;
+            color: var(--muted);
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* ── ヘッダー ── */
+        #header {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 100;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 28px;
+            background: var(--panel);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            border-bottom: 1px solid var(--border);
+            box-shadow: 0 1px 0 rgba(255,255,255,0.8);
+        }
+
+        #header-left { display: flex; align-items: center; gap: 14px; }
+
+        /* ロゴアイコン */
+        #logo-icon {
+            width: 34px; height: 34px;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        #logo-icon svg { width: 18px; height: 18px; fill: white; }
+
+        #title-wrap { display: flex; flex-direction: column; gap: 1px; }
+        #title-main {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 22px;
+            letter-spacing: 3px;
+            color: var(--text);
+            line-height: 1;
+        }
+        #title-sub {
+            font-size: 10px;
+            letter-spacing: 2.5px;
+            color: var(--muted);
+            text-transform: uppercase;
+            font-weight: 300;
+        }
+
+        /* 区切り線 */
+        .h-divider {
+            width: 1px; height: 24px;
+            background: var(--border);
+            margin: 0 4px;
+        }
+
+        /* ステータスチップ */
+        #status-chip {
+            display: flex; align-items: center; gap: 6px;
+            padding: 4px 12px;
+            background: rgba(37,99,235,0.08);
+            border: 1px solid rgba(37,99,235,0.2);
+            border-radius: 999px;
+        }
+        .dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: #22c55e;
+            animation: pulse 2s ease-in-out infinite;
+            box-shadow: 0 0 6px #22c55e;
+        }
+        @keyframes pulse {
+            0%,100% { opacity:1; transform:scale(1); }
+            50% { opacity:0.5; transform:scale(0.85); }
+        }
+        #status-text { font-size: 11px; letter-spacing: 1px; color: var(--accent); font-weight: 500; }
+
+        #header-right { display: flex; align-items: center; gap: 10px; }
+
+        /* 日時 */
+        #header-date {
+            font-size: 11px;
+            color: var(--muted);
+            letter-spacing: 1px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* ── 階層セレクター（右サイド） ── */
+        #floor-selector {
+            position: fixed;
+            top: 50%; right: 24px;
+            transform: translateY(-50%);
+            z-index: 100;
+            display: flex; flex-direction: column; gap: 0;
+            opacity: 0;
+            transition: opacity 0.5s ease 0.3s;
+            /* カード全体 */
+            background: var(--panel);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+        #floor-selector.visible { opacity: 1; }
+
+        #floor-label {
+            font-size: 9px;
+            letter-spacing: 3px;
+            color: var(--muted);
+            text-transform: uppercase;
+            text-align: center;
+            padding: 12px 0 8px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .floor-btn {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1px;
+            padding: 14px 20px;
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            transition: background 0.18s ease, color 0.18s ease;
+            width: 80px;
+            color: var(--muted);
+        }
+        .floor-btn:last-child { border-bottom: none; }
+        .floor-btn:hover { background: rgba(37,99,235,0.06); color: var(--accent); }
+
+        .floor-btn.active {
+            background: linear-gradient(135deg, rgba(37,99,235,0.12), rgba(249,115,22,0.08));
+            color: var(--accent);
+        }
+        /* アクティブ時の左バー */
+        .floor-btn.active::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 20%; bottom: 20%;
+            width: 3px;
+            border-radius: 0 3px 3px 0;
+            background: linear-gradient(180deg, var(--accent), var(--accent2));
+        }
+
+        .floor-num {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 24px;
+            letter-spacing: 1px;
+            line-height: 1;
+        }
+        .floor-tag {
+            font-size: 8px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            opacity: 0.7;
+        }
+
+        /* ── 操作ガイド（左下） ── */
+        #controls-panel {
+            position: fixed;
+            bottom: 24px; left: 24px;
+            z-index: 100;
+            background: var(--panel);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px 16px;
+            display: flex; flex-direction: column; gap: 7px;
+            opacity: 0;
+            transform: translateY(8px);
+            transition: opacity 0.5s ease 0.2s, transform 0.5s ease 0.2s;
+            box-shadow: var(--shadow);
+        }
+        #controls-panel.visible { opacity: 1; transform: translateY(0); }
+
+        .ctrl-item {
+            display: flex; align-items: center; gap: 10px;
+            font-size: 11px; color: var(--muted); letter-spacing: 0.3px;
+        }
+        .ctrl-key {
+            display: inline-flex; align-items: center; justify-content: center;
+            min-width: 44px; height: 20px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 9px; letter-spacing: 0.5px;
+            color: var(--accent);
+            background: rgba(37,99,235,0.06);
+            font-family: monospace;
+            padding: 0 6px;
+        }
+
+        /* ── 情報パネル（右下） ── */
+        #info-panel {
+            position: fixed;
+            bottom: 24px; right: 24px;
+            z-index: 100;
+            background: var(--panel);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px 20px;
+            min-width: 180px;
+            opacity: 0;
+            transform: translateY(8px);
+            transition: opacity 0.5s ease 0.4s, transform 0.5s ease 0.4s;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+        #info-panel.visible { opacity: 1; transform: translateY(0); }
+
+        /* グラデーションアクセントバー */
+        #info-panel::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+        }
+
+        .info-row { margin-bottom: 12px; }
+        .info-row:last-child { margin-bottom: 0; }
+        .info-label {
+            font-size: 9px; letter-spacing: 2.5px;
+            color: var(--muted); text-transform: uppercase; margin-bottom: 2px;
+        }
+        .info-value {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 20px; letter-spacing: 1.5px; color: var(--text);
+        }
+
+        /* ── トースト ── */
+        #floor-toast {
+            position: fixed;
+            top: 72px; left: 50%;
+            transform: translateX(-50%) translateY(-6px);
+            z-index: 300;
+            background: var(--panel);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            padding: 8px 22px;
+            font-size: 12px;
+            letter-spacing: 2.5px;
+            color: var(--accent);
+            font-weight: 500;
+            text-transform: uppercase;
+            opacity: 0;
+            transition: opacity 0.25s ease, transform 0.25s ease;
+            pointer-events: none;
+            box-shadow: var(--shadow);
+            white-space: nowrap;
+        }
+        #floor-toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
     </style>
-
-    <button class="F1">F1</button>
-    <button class="F2">F2</button>
-    <button class="F3">F3</button>
-    <button class="F4">F4</button>
-
 </head>
 <body>
 
-    <canvas id="MapCanvas"></canvas>
+    <!-- ローディング -->
+    <div id="loading">
+        <div id="loading-logo">SCHOOL FEST</div>
+        <div id="loading-sub">2026 · Interactive Map</div>
+        <div id="loading-bar-track">
+            <div id="loading-bar-fill"></div>
+        </div>
+        <div id="loading-percent">0%</div>
+    </div>
 
-    <script type="importmap">
-        {
-            "imports":{
-                "three": "https://cdn.jsdelivr.net/npm/three@0.182.0/build/three.webgpu.js",
-                "three/webgpu": "https://cdn.jsdelivr.net/npm/three@0.182.0/build/three.webgpu.js",
-                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.182.0/examples/jsm/"
+    <!-- 3D -->
+    <div id="three"></div>
+
+    <!-- ヘッダー -->
+    <div id="header">
+        <div id="header-left">
+            <div id="logo-icon">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/>
+                </svg>
+            </div>
+            <div class="h-divider"></div>
+            <div id="title-wrap">
+                <div id="title-main">SCHOOL FEST 2026</div>
+                <div id="title-sub">Interactive 3D Map</div>
+            </div>
+        </div>
+        <div id="header-right">
+            <div id="header-date" id="header-date"></div>
+            <div class="h-divider"></div>
+            <div id="status-chip">
+                <div class="dot"></div>
+                <div id="status-text">LIVE</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 操作ガイド -->
+    <div id="controls-panel">
+        <div class="ctrl-item"><span class="ctrl-key">drag</span>回転</div>
+        <div class="ctrl-item"><span class="ctrl-key">scroll</span>ズーム</div>
+        <div class="ctrl-item"><span class="ctrl-key">R-drag</span>移動</div>
+    </div>
+
+    <!-- 情報パネル -->
+    <div id="info-panel">
+        <div class="info-row">
+            <div class="info-label">Event</div>
+            <div class="info-value">学校祭 2026</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">Mode</div>
+            <div class="info-value">3D MAP</div>
+        </div>
+    </div>
+
+    <!-- 階層セレクター -->
+    <div id="floor-selector">
+        <div id="floor-label">Floor</div>
+        <button class="floor-btn" data-floor="4" onclick="selectFloor(this,4)">
+            <span class="floor-num">4F</span>
+            <span class="floor-tag">Top</span>
+        </button>
+        <button class="floor-btn" data-floor="3" onclick="selectFloor(this,3)">
+            <span class="floor-num">3F</span>
+            <span class="floor-tag">3rd</span>
+        </button>
+        <button class="floor-btn" data-floor="2" onclick="selectFloor(this,2)">
+            <span class="floor-num">2F</span>
+            <span class="floor-tag">2nd</span>
+        </button>
+        <button class="floor-btn active" data-floor="1" onclick="selectFloor(this,1)">
+            <span class="floor-num">1F</span>
+            <span class="floor-tag">Ground</span>
+        </button>
+    </div>
+
+    <!-- トースト -->
+    <div id="floor-toast"></div>
+
+    <!-- Three.js -->
+    <script src="https://unpkg.com/three@0.128.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fflate@0.7.4/umd/index.js"></script>
+    <script>window.fflate = fflate;</script>
+    <script src="https://unpkg.com/three@0.128.0/examples/js/loaders/FBXLoader.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="./main.js"></script>
+    <script>
+        // 日時表示
+        function updateDate() {
+            const now = new Date();
+            const d = now.toLocaleDateString('ja-JP', { month: 'short', day: 'numeric', weekday: 'short' });
+            const t = now.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+            document.getElementById('header-date').textContent = d + '  ' + t;
+        }
+        updateDate();
+        setInterval(updateDate, 10000);
+
+        // 階層カメラ位置（仮実装）
+        const floorCameraPositions = {
+            1: { pos: [600, 200, 600], target: [0,   0, 0] },
+            2: { pos: [600, 400, 600], target: [0, 150, 0] },
+            3: { pos: [600, 600, 600], target: [0, 300, 0] },
+            4: { pos: [600, 800, 600], target: [0, 450, 0] },
+        };
+        const floorNames = {
+            1: '1F  Ground Floor',
+            2: '2F  2nd Floor',
+            3: '3F  3rd Floor',
+            4: '4F  Top Floor',
+        };
+
+        let toastTimer = null;
+
+        function selectFloor(btn, floor) {
+            document.querySelectorAll('.floor-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            const cfg = floorCameraPositions[floor];
+            if (window._mapCamera && window._mapControls) {
+                animateCamera(window._mapCamera, window._mapControls, cfg.pos, cfg.target, 800);
             }
-        }
-    </script>
 
-    <script type="module">
-
-        import * as THREE from "three/webgpu";
-        import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-        import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-
-        const renderer = new THREE.WebGPURenderer({
-            canvas: document.querySelector("#MapCanvas")
-        });
-
-        renderer.setPixelRatio(window.devicePixelRatio);
-        renderer.setSize( innerWidth, innerHeight);
-        renderer.setAnimationLoop(animation);
-
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x000000);
-
-        const camera = new THREE.PerspectiveCamera(45, innerWidth/ innerHeight);
-        camera.position.set(0, 0, 1000);
-        const controls = new OrbitControls(camera, document.body);
-
-
-        const loader = new GLTFLoader();
-        
-        const gltf = await loader.loadAsync("../3D/map1.glb");
-        const model = gltf.scene;
-        scene.add(model);
-        model.scale.set(30,30,30);
-
-
-        const directionalLight = new THREE.DirectionalLight(0xFFFFFF);
-        directionalLight.position.set(1, 1, 1);
-        scene.add(directionalLight);
-
-        function animation(){
-            renderer.render(scene,camera);
+            const toast = document.getElementById('floor-toast');
+            toast.textContent = floorNames[floor];
+            toast.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => toast.classList.remove('show'), 2000);
         }
 
-
+        function animateCamera(camera, controls, targetPos, targetLook, duration) {
+            const startPos  = camera.position.clone();
+            const startLook = controls.target.clone();
+            const endPos    = new THREE.Vector3(...targetPos);
+            const endLook   = new THREE.Vector3(...targetLook);
+            const t0        = performance.now();
+            const ease = t => t < 0.5 ? 2*t*t : -1+(4-2*t)*t;
+            (function tick(now) {
+                const t = Math.min((now - t0) / duration, 1);
+                const e = ease(t);
+                camera.position.lerpVectors(startPos, endPos, e);
+                controls.target.lerpVectors(startLook, endLook, e);
+                controls.update();
+                if (t < 1) requestAnimationFrame(tick);
+            })(performance.now());
+        }
     </script>
 </body>
 </html>
+// Yokoyama
