@@ -1,0 +1,1877 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>SCHOOL FEST 2026 — 校舎マップ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=IBM+Plex+Sans+JP:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg-1: #0d1626;
+  --bg-2: #1a2438;
+  --paper: #f5f8fc;
+  --paper-2: #e2eaf3;
+  --paper-3: #ffffff;
+  --ink: #0d1626;
+  --ink-2: #2a3447;
+  --ink-soft: #5a6878;
+  --mute: #8e9aab;
+  --line: #c4cdd9;
+  --line-soft: #dfe5ed;
+  --accent: #2d6fb5;
+  --accent-2: #4a90d9;
+  --neon: #00d4ff;
+  --neon-2: #7b5ea7;
+  --hi: #5fc8c8;
+}
+
+/* ===== Scanline overlay (game feel) ===== */
+body::after {
+  content: '';
+  position: fixed; inset: 0; z-index: 999;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0px, transparent 3px,
+    rgba(0,0,0,0.03) 3px, rgba(0,0,0,0.03) 4px
+  );
+  pointer-events: none;
+}
+
+html, body {
+  height: 100%;
+  font-family: 'Inter', 'IBM Plex Sans JP', sans-serif;
+  background: linear-gradient(180deg, #f0f5fa 0%, #dce8f4 100%);
+  color: var(--ink);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  touch-action: none;
+}
+
+/* ===== Top bar — HUD style ===== */
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0;
+  height: 60px;
+  background: rgba(255,255,255,0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--line);
+  display: flex; align-items: center;
+  padding: 0 20px;
+  z-index: 50;
+  gap: 16px;
+}
+
+/* Brand: game / futuristic */
+.brand {
+  display: flex; align-items: baseline; gap: 8px;
+}
+.brand-title {
+  font-family: 'Rajdhani', 'Inter', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: linear-gradient(135deg, #0d1626 0%, var(--accent) 60%, var(--neon) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+  position: relative;
+}
+.brand-title::after {
+  content: '校舎マップ';
+  position: absolute;
+  bottom: -1px; left: 0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  -webkit-text-fill-color: var(--accent);
+  color: var(--accent);
+  opacity: 0.7;
+}
+.brand-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #fff;
+  background: var(--accent);
+  padding: 3px 7px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  align-self: center;
+}
+
+/* HUD corner markers */
+.hud-corner {
+  position: absolute;
+  width: 10px; height: 10px;
+  border-color: var(--accent);
+  border-style: solid;
+  opacity: 0.5;
+}
+.hud-corner.tl { top: 4px; left: 4px; border-width: 2px 0 0 2px; }
+.hud-corner.tr { top: 4px; right: 4px; border-width: 2px 2px 0 0; }
+.hud-corner.bl { bottom: 4px; left: 4px; border-width: 0 0 2px 2px; }
+.hud-corner.br { bottom: 4px; right: 4px; border-width: 0 2px 2px 0; }
+
+/* Animated scan line on topbar */
+.topbar::before {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0;
+  height: 2px; width: 0;
+  background: linear-gradient(90deg, transparent, var(--neon), transparent);
+  animation: scanH 3.5s ease-in-out infinite;
+}
+@keyframes scanH {
+  0%   { left: -30%; width: 30%; opacity: 0; }
+  20%  { opacity: 0.7; }
+  80%  { opacity: 0.7; }
+  100% { left: 100%; width: 30%; opacity: 0; }
+}
+
+.flex-1 { flex: 1; }
+.icon-btn {
+  width: 38px; height: 38px;
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,0.8);
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: var(--ink);
+  transition: all 0.15s;
+  position: relative; overflow: hidden;
+}
+.icon-btn:hover {
+  background: #fff;
+  border-color: var(--accent);
+  box-shadow: 0 0 8px rgba(0,212,255,0.2);
+}
+.icon-btn svg { width: 16px; height: 16px; }
+
+/* ===== Floor pills — HUD style ===== */
+.floors {
+  position: fixed;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex; flex-direction: row; gap: 8px;
+  z-index: 40;
+}
+.floor-pill {
+  width: 56px; height: 56px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--line);
+  color: var(--ink-soft);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  cursor: pointer;
+  font-family: 'Rajdhani', 'JetBrains Mono', monospace;
+  transition: all 0.18s;
+  position: relative; overflow: hidden;
+  box-shadow: 0 4px 12px rgba(13,22,38,0.10);
+}
+.floor-pill::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(0,212,255,0.08), transparent);
+  opacity: 0; transition: opacity 0.18s;
+}
+.floor-pill .fnum { font-size: 20px; font-weight: 700; line-height: 1; letter-spacing: -0.02em; }
+.floor-pill .flabel { font-size: 8px; letter-spacing: 2px; opacity: 0.6; margin-top: 1px; }
+.floor-pill:hover {
+  background: #fff; border-color: var(--accent); color: var(--ink);
+  transform: translateY(-3px);
+  box-shadow: 0 0 12px rgba(45,111,181,0.25), 0 6px 16px rgba(13,22,38,0.12);
+}
+.floor-pill:hover::before { opacity: 1; }
+.floor-pill.active {
+  background: var(--ink); color: #fff;
+  border-color: var(--neon);
+  box-shadow: 0 0 16px rgba(0,212,255,0.35), 0 6px 16px rgba(13,22,38,0.25);
+}
+.floor-pill.active::before {
+  background: linear-gradient(135deg, rgba(0,212,255,0.15), transparent);
+  opacity: 1;
+}
+.floor-pill.active::after {
+  content: '';
+  position: absolute; inset: 3px;
+  border: 1px solid rgba(0,212,255,0.4);
+  border-radius: 7px;
+  pointer-events: none;
+}
+
+/* ===== Map canvas ===== */
+.map-wrap {
+  position: fixed;
+  top: 60px; left: 0; right: 0; bottom: 0;
+}
+#mapCanvas { display: block; width: 100%; height: 100%; }
+
+/* ===== Pin markers ===== */
+.pin-card {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  pointer-events: auto;
+  cursor: pointer;
+  transition: transform 0.15s, filter 0.15s;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.pin-card:hover {
+  transform: translate(-50%, -115%) scale(1.15);
+  z-index: 10;
+}
+.pin-card.hidden { opacity: 0; pointer-events: none; }
+
+.pc-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+
+/* Pin head (circle) */
+.pc-head {
+  width: 55px;
+  height: 55px;
+  border-radius: 50%;
+  background: var(--pc-color, #888);
+  border: 3px solid rgba(255,255,255,0.92);
+  box-shadow:
+    0 3px 12px rgba(0,0,0,0.28),
+    0 0 0 1.5px rgba(0,0,0,0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  line-height: 1;
+  position: relative;
+}
+.pin-card:hover .pc-head {
+  box-shadow:
+    0 6px 20px rgba(0,0,0,0.32),
+    0 0 0 4px rgba(255,255,255,0.55),
+    0 0 18px var(--pc-color, #888);
+}
+.pin-card.selected .pc-head {
+  border-color: #fff;
+  box-shadow:
+    0 0 0 4px var(--pc-color, #888),
+    0 6px 20px rgba(0,0,0,0.38);
+}
+
+/* Pin tail */
+.pc-tail {
+  width: 0; height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 12px solid var(--pc-color, #888);
+  filter: drop-shadow(0 3px 3px rgba(0,0,0,0.18));
+}
+
+/* Gravity-fall entry */
+@keyframes gravityFall {
+  0%   { opacity: 0; transform: translate(-50%, -220%) scale(0.6); }
+  60%  { opacity: 1; transform: translate(-50%, -92%) scale(1.08); }
+  80%  { transform: translate(-50%, -103%) scale(0.96); }
+  90%  { transform: translate(-50%, -98%) scale(1.02); }
+  100% { opacity: 1; transform: translate(-50%, -100%) scale(1); }
+}
+.pin-card.falling { animation: gravityFall 0.5s cubic-bezier(0.215, 0.61, 0.355, 1) forwards; }
+
+/* ===== Floor switch flash overlay ===== */
+.floor-flash {
+  position: fixed; inset: 0; z-index: 45;
+  background: radial-gradient(ellipse at center, rgba(0,212,255,0.18) 0%, transparent 70%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.08s;
+}
+.floor-flash.on { opacity: 1; transition: none; }
+
+/* ===== Floor transition scan line ===== */
+.floor-scan {
+  position: fixed; left: 0; right: 0; z-index: 46;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--neon), var(--accent), var(--neon), transparent);
+  pointer-events: none;
+  top: -4px;
+  transition: none;
+}
+.floor-scan.scanning {
+  animation: scanDown 0.45s cubic-bezier(0.4, 0, 0.6, 1) forwards;
+}
+@keyframes scanDown {
+  0%   { top: 60px; opacity: 1; }
+  100% { top: 100vh; opacity: 0; }
+}
+
+/* ===== Floor number counter ===== */
+.floor-counter {
+  position: fixed;
+  top: 74px; left: 20px;
+  z-index: 48;
+  display: flex; flex-direction: column; gap: 0;
+  pointer-events: none;
+}
+.floor-counter .fc-num-big {
+  font-family: 'Rajdhani', 'Inter', sans-serif;
+  font-size: 72px;
+  font-weight: 700;
+  line-height: 0.9;
+  letter-spacing: -0.04em;
+  color: var(--ink);
+  opacity: 0.07;
+  transition: opacity 0.3s;
+  user-select: none;
+}
+
+/* ===== Floor info card ===== */
+.floor-card {
+  position: fixed;
+  bottom: 92px; left: 18px;
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px 18px;
+  display: flex; flex-direction: column; gap: 5px;
+  z-index: 40;
+  color: var(--ink);
+  min-width: 205px;
+  box-shadow: 0 12px 32px -10px rgba(13,22,38,0.15);
+  overflow: hidden;
+}
+/* HUD corners */
+.floor-card::before, .floor-card::after {
+  content: '';
+  position: absolute;
+  width: 8px; height: 8px;
+  border-color: var(--accent);
+  border-style: solid;
+  opacity: 0.45;
+}
+.floor-card::before { top: 5px; left: 5px; border-width: 1.5px 0 0 1.5px; }
+.floor-card::after  { bottom: 5px; right: 5px; border-width: 0 1.5px 1.5px 0; }
+.floor-card .fc-kicker {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; letter-spacing: 2.5px;
+  color: var(--accent); text-transform: uppercase;
+}
+.floor-card .fc-num {
+  font-family: 'Rajdhani', 'Inter', sans-serif;
+  font-size: 34px; font-weight: 700;
+  letter-spacing: -0.03em; line-height: 1;
+  color: var(--ink);
+  display: flex; align-items: baseline; gap: 4px;
+}
+.floor-card .fc-num .fc-pre {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px; opacity: 0.4; font-weight: 400;
+}
+.floor-card .fc-jp {
+  font-family: 'IBM Plex Sans JP', sans-serif;
+  font-size: 13px; color: var(--ink-2); font-weight: 500;
+}
+.floor-card .fc-en {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; letter-spacing: 1px;
+  color: var(--ink-soft); text-transform: uppercase;
+}
+.floor-card .fc-roomsbtn {
+  margin-top: 8px;
+  padding: 9px 12px;
+  background: var(--ink);
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  cursor: pointer;
+  font-family: 'IBM Plex Sans JP', sans-serif;
+  font-size: 12px; font-weight: 500;
+  display: flex; align-items: center; gap: 8px;
+  transition: all 0.18s;
+  position: relative; overflow: hidden;
+}
+.floor-card .fc-roomsbtn::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(0,212,255,0.15), transparent);
+  transform: translateX(-100%);
+  transition: transform 0.4s;
+}
+.floor-card .fc-roomsbtn:hover { background: var(--accent); }
+.floor-card .fc-roomsbtn:hover::before { transform: translateX(100%); }
+.floor-card .fc-roomsbtn svg { width: 12px; height: 12px; }
+
+/* ===== Rooms list panel ===== */
+.rlp {
+  position: fixed;
+  top: 72px; left: 18px; bottom: 130px; width: 320px;
+  background: rgba(255,255,255,0.97);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  z-index: 50;
+  display: flex; flex-direction: column;
+  box-shadow: 0 16px 40px -10px rgba(13,22,38,0.18);
+  opacity: 0; pointer-events: none;
+  transform: translateX(-12px);
+  transition: opacity 0.22s, transform 0.22s;
+  color: var(--ink);
+  overflow: hidden;
+}
+.rlp.open { opacity: 1; pointer-events: auto; transform: translateX(0); }
+/* Top neon line */
+.rlp::before {
+  content: ''; height: 2px; flex-shrink: 0;
+  background: linear-gradient(90deg, var(--accent), var(--neon), var(--accent));
+}
+.rlp-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px 10px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.rlp-title { display: flex; flex-direction: column; gap: 3px; }
+.rlp-floor { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 2px; color: var(--accent); }
+.rlp-count { font-family: 'IBM Plex Sans JP', sans-serif; font-size: 12px; color: var(--ink-soft); }
+.rlp-count b { color: var(--ink); font-weight: 600; margin-right: 3px; }
+.rlp-close { background: none; border: none; cursor: pointer; color: var(--ink-soft); font-size: 16px; padding: 6px; border-radius: 4px; }
+.rlp-close:hover { background: var(--paper-2); color: var(--ink); }
+.rlp-search { padding: 10px 14px; border-bottom: 1px solid var(--line-soft); }
+.rlp-search input {
+  width: 100%; padding: 9px 12px;
+  border: 1px solid var(--line); border-radius: 6px;
+  background: var(--paper);
+  font-family: 'IBM Plex Sans JP', sans-serif; font-size: 12px; color: var(--ink); outline: none;
+}
+.rlp-search input::placeholder { color: var(--mute); }
+.rlp-search input:focus { border-color: var(--accent); background: #fff; }
+.rlp-body { flex: 1; overflow-y: auto; padding: 6px 0; }
+.rlp-section {
+  padding: 10px 16px 4px;
+  font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 1.5px; color: var(--ink-soft);
+  border-top: 1px dashed var(--line-soft); margin-top: 4px;
+}
+.rlp-section:first-of-type { border-top: none; margin-top: 0; }
+.rlp-item {
+  display: grid; grid-template-columns: 12px 1fr;
+  align-items: center; gap: 12px; padding: 10px 16px;
+  cursor: pointer; border-left: 2px solid transparent;
+  transition: background 0.12s, border-left-color 0.12s;
+}
+.rlp-item:hover { background: rgba(45,111,181,0.07); border-left-color: var(--accent); }
+.rlp-item .swatch { width: 10px; height: 10px; border-radius: 3px; border: 1px solid var(--ink); }
+.rlp-item .info { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.rlp-item .jp { font-family: 'IBM Plex Sans JP', sans-serif; font-size: 13px; font-weight: 500; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rlp-item .en { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--ink-soft); letter-spacing: 0.5px; }
+
+/* ===== Detail panel ===== */
+.detail {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: rgba(255,255,255,0.98);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--line);
+  z-index: 60; padding: 18px 22px 24px;
+  transform: translateY(100%);
+  transition: transform 0.32s cubic-bezier(.2,.8,.2,1);
+  box-shadow: 0 -16px 40px -10px rgba(13,22,38,0.18);
+  max-height: 60vh; overflow-y: auto; color: var(--ink);
+}
+/* Neon top line on detail */
+.detail::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, var(--accent), var(--neon), var(--accent));
+}
+.detail.open { transform: translateY(0); }
+.detail .d-handle { width: 40px; height: 4px; background: var(--mute); border-radius: 2px; margin: 0 auto 14px; }
+.detail .d-cat { display: inline-flex; align-items: center; gap: 7px; font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 1.5px; color: var(--ink-soft); text-transform: uppercase; margin-bottom: 6px; }
+.detail .d-cat .dot { width: 8px; height: 8px; border-radius: 2px; }
+.detail .d-jp { font-family: 'IBM Plex Sans JP', sans-serif; font-size: 22px; font-weight: 600; line-height: 1.2; color: var(--ink); }
+.detail .d-en { font-family: 'Rajdhani', 'Inter', sans-serif; font-size: 13px; color: var(--accent); margin-top: 3px; letter-spacing: 1px; font-weight: 600; text-transform: uppercase; }
+.detail .d-desc { margin-top: 14px; font-family: 'IBM Plex Sans JP', sans-serif; font-size: 13px; line-height: 1.65; color: var(--ink-2); }
+.detail .d-close { position: absolute; top: 12px; right: 12px; background: none; border: none; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; color: var(--ink-soft); display: flex; align-items: center; justify-content: center; }
+.detail .d-close:hover { background: var(--paper-2); color: var(--ink); }
+
+/* Detail panel extras */
+.detail-tabs {
+  display: flex; gap: 4px;
+  margin-top: 14px; margin-bottom: 2px;
+  border-bottom: 1px solid var(--line-soft);
+  padding-bottom: 0;
+}
+.detail-tab {
+  padding: 7px 14px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; font-weight: 500;
+  letter-spacing: 1px; text-transform: uppercase;
+  color: var(--ink-soft);
+  background: none; border: none;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color 0.15s, border-color 0.15s;
+}
+.detail-tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+.detail-tab:hover:not(.active) { color: var(--ink); }
+
+.detail-panel {
+  display: none;
+  padding-top: 14px;
+}
+.detail-panel.active { display: block; }
+
+/* Image gallery */
+.detail-images {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 8px;
+}
+.detail-images img {
+  width: 100%; aspect-ratio: 4/3;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+}
+.detail-img-empty {
+  padding: 28px;
+  text-align: center;
+  color: var(--mute);
+  font-family: 'IBM Plex Sans JP', sans-serif;
+  font-size: 12px;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+}
+
+/* Menu table */
+.detail-menu table {
+  width: 100%; border-collapse: collapse;
+  font-family: 'IBM Plex Sans JP', sans-serif; font-size: 13px;
+}
+.detail-menu th {
+  text-align: left; padding: 6px 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; letter-spacing: 1px;
+  color: var(--ink-soft); text-transform: uppercase;
+  border-bottom: 1px solid var(--line-soft);
+}
+.detail-menu td {
+  padding: 8px 8px; color: var(--ink-2);
+  border-bottom: 1px solid var(--line-soft);
+}
+.detail-menu td.price {
+  text-align: right; font-weight: 600;
+  color: var(--accent); font-size: 13px;
+  font-family: 'JetBrains Mono', monospace;
+  white-space: nowrap;
+}
+.detail-menu-empty {
+  padding: 28px;
+  text-align: center;
+  color: var(--mute);
+  font-family: 'IBM Plex Sans JP', sans-serif;
+  font-size: 12px;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+}
+
+/* 3D model viewer */
+.detail-3d {
+  position: relative;
+  width: 100%; height: 220px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  overflow: hidden;
+  background: linear-gradient(135deg, #f0f5fa, #e2eaf3);
+}
+.detail-3d canvas { width: 100% !important; height: 100% !important; display: block; }
+.detail-3d-empty {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  height: 100%; gap: 10px;
+  color: var(--mute);
+  font-family: 'IBM Plex Sans JP', sans-serif;
+  font-size: 12px;
+}
+.detail-3d-upload {
+  padding: 8px 16px;
+  background: var(--ink); color: #fff;
+  border: none; border-radius: 6px;
+  font-family: 'IBM Plex Sans JP', sans-serif;
+  font-size: 12px; cursor: pointer;
+  transition: background 0.15s;
+}
+.detail-3d-upload:hover { background: var(--accent); }
+#model3dInput { display: none; }
+.legend {
+  position: fixed; bottom: 92px; right: 18px;
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--line);
+  border-radius: 10px; padding: 10px 12px;
+  display: flex; flex-direction: column; gap: 5px;
+  z-index: 40; font-family: 'IBM Plex Sans JP', sans-serif; font-size: 10px; color: var(--ink-2);
+  max-width: 130px; box-shadow: 0 8px 20px rgba(13,22,38,0.10);
+}
+.legend .lg-row { display: flex; align-items: center; gap: 7px; }
+.legend .lg-dot { width: 9px; height: 9px; border-radius: 2px; border: 1px solid var(--ink); flex-shrink: 0; }
+
+/* ===== Tooltip ===== */
+.tip {
+  position: fixed; pointer-events: none;
+  background: rgba(255,255,255,0.97); border: 1px solid var(--line);
+  color: var(--ink); font-family: 'IBM Plex Sans JP', sans-serif; font-size: 12px;
+  padding: 6px 10px; border-radius: 6px; z-index: 70; opacity: 0;
+  transition: opacity 0.12s; white-space: nowrap;
+  box-shadow: 0 8px 24px rgba(13,22,38,0.18);
+}
+.tip.show { opacity: 1; }
+.tip .tip-cat { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 1px; color: var(--accent); text-transform: uppercase; margin-bottom: 1px; }
+
+@media (max-width: 700px) {
+  .topbar { height: 52px; padding: 0 12px; }
+  .map-wrap { top: 52px; }
+  .brand-title { font-size: 18px; }
+  .floors { bottom: 12px; gap: 6px; }
+  .floor-pill { width: 52px; height: 52px; }
+  .floor-pill .fnum { font-size: 18px; }
+  .floor-card { left: 8px; bottom: 80px; padding: 10px 14px; min-width: 0; }
+  .legend { right: 8px; bottom: 80px; }
+  .rlp { left: 8px; right: 8px; width: auto; top: 62px; bottom: 80px; }
+  .detail { padding: 14px 18px 20px; max-height: 70vh; }
+}
+</style>
+</head>
+<body>
+
+<!-- Flash overlay for floor transitions -->
+<div class="floor-flash" id="floorFlash"></div>
+<div class="floor-scan" id="floorScan"></div>
+
+<header class="topbar">
+  <div class="hud-corner tl"></div>
+  <div class="hud-corner tr"></div>
+  <div class="hud-corner bl"></div>
+  <div class="hud-corner br"></div>
+  <div class="brand">
+    <div class="brand-title">SCHOOL FEST<br><span style="font-size:9px;opacity:0">_</span></div>
+    <div class="brand-badge">2026</div>
+  </div>
+  <div class="flex-1"></div>
+  <button class="icon-btn" id="resetView" title="ビューをリセット">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+  </button>
+</header>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="b1">SCHOOL FEST 2026</div>
+    <div class="b2">校舎マップ</div>
+  </div>
+  <div class="flex-1"></div>
+  <button class="icon-btn" id="resetView" title="ビューをリセット">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+  </button>
+</header>
+
+<div class="floors" id="floorPills"></div>
+<div class="floor-counter"><div class="fc-num-big" id="counterBig">01</div></div>
+
+<div class="map-wrap">
+  <canvas id="mapCanvas"></canvas>
+  <div id="labelHost" style="position:absolute;inset:0;pointer-events:none;overflow:hidden;"></div>
+</div>
+
+<div class="floor-card">
+  <div class="fc-kicker">SCHOOL FEST · LEVEL</div>
+  <div class="fc-num"><span class="fc-pre">L.</span><span id="floorBig">01</span></div>
+  <div class="fc-jp" id="floorJp">1階</div>
+  <div class="fc-en" id="floorEn">GROUND FLOOR</div>
+  <button class="fc-roomsbtn" id="openRooms">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    <span>部屋一覧 <b id="roomCountSm">—</b></span>
+  </button>
+</div>
+
+<div class="legend" id="legend"></div>
+
+<aside class="rlp" id="roomsList">
+  <div class="rlp-head">
+    <div class="rlp-title">
+      <div class="rlp-floor" id="rlpFloor">L.01</div>
+      <div class="rlp-count"><b id="rlpCount">0</b>部屋 / rooms</div>
+    </div>
+    <button class="rlp-close" id="rlpClose">✕</button>
+  </div>
+  <div class="rlp-search">
+    <input type="text" id="rlpSearch" placeholder="部屋を検索 / Search rooms…" />
+  </div>
+  <div class="rlp-body" id="rlpBody"></div>
+</aside>
+
+<aside class="detail" id="detail">
+  <div class="d-handle"></div>
+  <button class="d-close" id="detailClose">
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><line x1="6" y1="6" x2="18" y2="18"/><line x1="6" y1="18" x2="18" y2="6"/></svg>
+  </button>
+  <div class="d-cat" id="dCat"></div>
+  <div class="d-jp" id="dJp">—</div>
+  <div class="d-en" id="dEn">—</div>
+
+  <!-- Tabs -->
+  <div class="detail-tabs" id="detailTabs">
+    <button class="detail-tab active" data-tab="info">INFO</button>
+    <button class="detail-tab" data-tab="photos">PHOTOS</button>
+    <button class="detail-tab" data-tab="menu">MENU</button>
+    <button class="detail-tab" data-tab="model">3D</button>
+  </div>
+
+  <!-- INFO tab -->
+  <div class="detail-panel active" id="tab-info">
+    <div class="d-desc" id="dDesc">—</div>
+  </div>
+
+  <!-- PHOTOS tab -->
+  <div class="detail-panel" id="tab-photos">
+    <div class="detail-images" id="dImages">
+      <div class="detail-img-empty">写真を追加するには<br>フォルダから選択してください</div>
+    </div>
+    <input type="file" id="photoInput" accept="image/*" multiple style="display:none">
+    <button onclick="document.getElementById('photoInput').click()"
+      style="margin-top:10px;padding:8px 14px;background:var(--ink);color:#fff;border:none;border-radius:6px;font-family:'IBM Plex Sans JP',sans-serif;font-size:12px;cursor:pointer;transition:background 0.15s"
+      onmouseover="this.style.background='var(--accent)'" onmouseout="this.style.background='var(--ink)'">
+      📷 写真を追加
+    </button>
+  </div>
+
+  <!-- MENU tab -->
+  <div class="detail-panel" id="tab-menu">
+    <div class="detail-menu" id="dMenu">
+      <div class="detail-menu-empty">メニューがありません<br>FLOORS データに menu: [] を追加してください</div>
+    </div>
+  </div>
+
+  <!-- 3D MODEL tab -->
+  <div class="detail-panel" id="tab-model">
+    <div class="detail-3d" id="d3dViewer">
+      <div class="detail-3d-empty" id="d3dEmpty">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.4"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+        <span>3Dモデルがありません</span>
+        <button class="detail-3d-upload" id="model3dBtn">📦 GLBファイルを読込</button>
+      </div>
+    </div>
+    <input type="file" id="model3dInput" accept=".glb,.gltf">
+  </div>
+</aside>
+
+<div class="tip" id="tip"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+'use strict';
+
+// =============================================================
+// GEOMETRY — measured from official evacuation map
+// Coordinate system: x=east, z=south, y=up
+// Origin = LINKS HALL center
+// =============================================================
+//
+// Building shape from pixel measurements:
+//   SW apex         (-6.1, 0,  6.95)   - acute corner (Global Room area)
+//   NE corner       ( 7.1, 0, -5.28)   - right angle corner
+//   SE corner       ( 7.1, 0,  5.14)   - acute corner (家庭科)
+//
+// The triangle is right-angled at NE (top-right).
+// North edge runs west from NE toward SW direction (the hypotenuse).
+// East edge is vertical from NE down to SE.
+// South edge is horizontal from SE west, then transitions into the hypotenuse.
+//
+// In practice the building has:
+//   - Main triangular footprint (SW to NE to SE)
+//   - South edge has a thin horizontal strip extending westward (応接室、事務、玄関、家庭科)
+//   - LINKS HALL is a 45° rotated square at center (~4.4 x 4.4)
+//   - Three lab rooms stacked vertically along the east edge inside the triangle
+//   - Health room near LINKS HALL east side
+//   - Global Room hanging off the SW hypotenuse (separate small diamond)
+//   - Gym is separate, to the east of the NE corner
+// =============================================================
+
+// Triangle vertices (world units) - scaled up to accommodate all rooms
+const TRI = {
+  SW: { x: -9.5, z:  7.5 },
+  NE: { x:  8.5, z: -6.0 },
+  SE: { x:  8.5, z:  7.5 },
+};
+// Hypotenuse direction (SW to NE)
+const HYP_DX = TRI.NE.x - TRI.SW.x;  // 18
+const HYP_DZ = TRI.NE.z - TRI.SW.z;  // -13.5
+const HYP_LEN = Math.hypot(HYP_DX, HYP_DZ);  // ≈ 22.5
+
+// =============================================================
+// CATEGORIES
+// =============================================================
+const CATS = {
+  hall:      { jp: 'ホール',   color: 0xe76d8f, dim: 0xb8536e },
+  classroom: { jp: '教室',     color: 0x6cb4e8, dim: 0x4d8cba },
+  lab:       { jp: '実験室',   color: 0x4a90d9, dim: 0x3372ab },
+  special:   { jp: '特別教室', color: 0xa78bda, dim: 0x806aaa },
+  office:    { jp: '事務室',   color: 0xf4a261, dim: 0xc77f48 },
+  library:   { jp: '図書室',   color: 0x88c97f, dim: 0x68a060 },
+  service:   { jp: 'サービス', color: 0x5fc8c8, dim: 0x489f9f },
+  stair:     { jp: '階段',     color: 0xb8c5d4, dim: 0x8a98a9 },
+  gym:       { jp: '体育館',   color: 0xff9966, dim: 0xcc7a52 },
+  ground:    { jp: 'グラウンド', color: 0xc8e6a0, dim: 0xa1b97f },
+};
+
+// =============================================================
+// FLOORS data — actual measured pixel coordinates from 1F map
+// All other floors share the same triangular shell with different rooms
+// =============================================================
+const FLOORS = {
+  1: {
+    label: 'L.01', jp: '1階', en: 'GROUND FLOOR',
+    rooms: [
+      // === Center: LINKS HALL (45° rotated big square) ===
+      { id:'links',  cx: 2.0,  cz: 2.0,  w: 4.4, d: 4.4, rot: 45, cat:'hall', jp:'リンクスホール', en:'LINKS HALL', desc:'' },
+
+      // === East edge: three labs (stacked vertically) ===
+      { id:'bio',    cx: 7.5,  cz: -3.5, w: 1.7, d: 2.0, rot: 0, cat:'lab', jp:'理科実験室(生物)', en:'Biology Lab',   desc:'' },
+      { id:'chem',   cx: 7.5,  cz: -1.2, w: 1.7, d: 2.0, rot: 0, cat:'lab', jp:'理科実験室(化学)', en:'Chemistry Lab', desc:'' },
+      { id:'phys',   cx: 7.5,  cz:  1.1, w: 1.7, d: 2.0, rot: 0, cat:'lab', jp:'理科実験室(物理)', en:'Physics Lab',   desc:'' },
+
+      // === Health room: between LINKS HALL and east labs ===
+      { id:'health', cx: 5.5,  cz:  3.5, w: 1.6, d: 1.4, rot: 0, cat:'service', jp:'保健室・カウンセリング室', en:'Nurse Room', desc:'' },
+
+      // === South edge horizontal strip ===
+      { id:'admin',  cx: -2.0, cz:  6.7, w: 1.8, d: 1.0, rot: 0, cat:'office',  jp:'応接室', en:'Reception', desc:'' },
+      { id:'jimu',   cx:  0.5, cz:  6.7, w: 2.6, d: 1.0, rot: 0, cat:'office',  jp:'事務室・入試広報室', en:'Office & Admissions', desc: '' },
+      { id:'gateI',  cx:  2.7, cz:  6.7, w: 1.2, d: 1.0, rot: 0, cat:'service', jp:'稲山通玄関', en:'Inayama Entrance', desc:'稲山通側エントランス。' },
+      { id:'home',   cx:  5.2, cz:  6.7, w: 2.6, d: 1.0, rot: 0, cat:'special', jp:'家庭科室', en:'Home Ec Studio', desc:'' },
+
+      // === A棟側玄関 (between LINKS and hypotenuse) ===
+      { id:'gateA',  cx: -2.0, cz:  4.5, w: 0.9, d: 0.8, rot: 0, cat:'service', jp:'A棟側玄関', en:'A-Wing Entrance', desc:'' },
+
+      // === Global Room (small diamond outside the SW hypotenuse) ===
+      { id:'global', cx: -7.5, cz:  4.5, w: 1.6, d: 1.6, rot: 45, cat:'special', jp:'グローバル教室', en:'Global Room', desc:'', detached: true },
+
+      // === Gym (separate building NE) ===
+      { id:'arena',  cx: 14.0, cz: -3.5, w: 6.5, d: 9.0, rot: 0, cat:'gym', jp:'メインアリーナ', en:'Main Arena', desc:'。', detached: true },
+      // === Ground (outdoor) ===
+      { id:'ground', cx: 15.5, cz: -10.0, w: 6.5, d: 4.0, rot: -8, cat:'ground', jp:'グラウンド', en:'Ground', desc:'屋外グラウンド。屋外イベント会場。', detached: true },
+    ],
+  },
+
+  2: {
+    label: 'L.02', jp: '2階', en: 'THIRD-YEAR CLASSES',
+    rooms: [
+      // Center: LINKS Hall void (open above 1F LINKS)
+      { id:'void',   cx: 2.0,  cz: 2.0,  w: 4.4, d: 4.4, rot: 45, cat:'hall', jp:'リンクスホール上部', en:'LINKS Hall Void', desc:'' },
+
+      // East edge: 5 classrooms + 放送室 + 生徒会
+      { id:'radio',   cx: 7.5,  cz: -4.4, w: 1.2, d: 0.7, rot: 0, cat:'service', jp:'放送室', en:'Broadcast', desc:'。' },
+      { id:'council', cx: 7.5,  cz: -3.6, w: 1.5, d: 0.7, rot: 0, cat:'office',  jp:'生徒会室', en:'Student Council', desc:'' },
+      { id:'3-8',     cx: 7.5,  cz: -2.4, w: 1.7, d: 1.4, rot: 0, cat:'classroom', jp:'3年8組', en:'Class 3-8', desc:'3-8 : ' },
+      { id:'3-7',     cx: 7.5,  cz: -0.9, w: 1.7, d: 1.4, rot: 0, cat:'classroom', jp:'3年7組', en:'Class 3-7', desc:'3-7 :' },
+      { id:'3-6',     cx: 7.5,  cz:  0.6, w: 1.7, d: 1.4, rot: 0, cat:'classroom', jp:'3年6組', en:'Class 3-6', desc:'3-6 : ' },
+      { id:'3-5',     cx: 7.5,  cz:  2.1, w: 1.7, d: 1.4, rot: 0, cat:'classroom', jp:'3年5組', en:'Class 3-5', desc:'3-5 : ' },
+      { id:'3-4',     cx: 7.5,  cz:  3.6, w: 1.7, d: 1.4, rot: 0, cat:'classroom', jp:'3年4組', en:'Class 3-4', desc:'3-4 : ' },
+
+      // S-6 stair (small diamond)
+      { id:'s6',     cx: 5.5,  cz: -1.5, w: 1.4, d: 1.4, rot: 45, cat:'stair', jp:'S-6 階段', en:'Stair S-6', desc:'' },
+
+      // Meeting room (small diamond on hypotenuse side)
+      { id:'meet',   cx: -2.5, cz:  4.0, w: 1.5, d: 1.5, rot: 45, cat:'office', jp:'会議室', en:'Meeting Room', desc:'' },
+
+      // South edge: art + S-9 + 3-1〜3-3 + S-8
+      { id:'art',    cx: -2.5, cz:  6.7, w: 1.5, d: 1.0, rot: 0, cat:'special',   jp:'芸術教室', en:'Art Room', desc:'' },
+      { id:'s9',     cx: -1.0, cz:  6.7, w: 0.8, d: 1.0, rot: 0, cat:'stair',     jp:'S-9 階段', en:'Stair S-9', desc:'' },
+      { id:'3-1',    cx:  0.2, cz:  6.7, w: 1.0, d: 1.0, rot: 0, cat:'classroom', jp:'3年1組', en:'Class 3-1', desc:'3-1 : ' },
+      { id:'3-2',    cx:  1.4, cz:  6.7, w: 1.0, d: 1.0, rot: 0, cat:'classroom', jp:'3年2組', en:'Class 3-2', desc:'3-2 : ' },
+      { id:'3-3',    cx:  2.6, cz:  6.7, w: 1.0, d: 1.0, rot: 0, cat:'classroom', jp:'3年3組', en:'Class 3-3', desc:'3-3 : ' },
+      { id:'s8',     cx:  3.8, cz:  6.7, w: 0.8, d: 1.0, rot: 0, cat:'stair',     jp:'S-8 階段', en:'Stair S-8', desc:'階段 S-8。' },
+
+      // Gym 2F
+      { id:'subArena',cx: 12.0, cz: -3.5, w: 3.5, d: 9.0, rot: 0, cat:'gym', jp:'サブアリーナ', en:'Sub Arena', desc:'', detached: true },
+      { id:'arenaUp', cx: 16.0, cz: -3.5, w: 4.5, d: 9.0, rot: 0, cat:'special', jp:'メインアリーナ上部', en:'Main Arena Upper', desc:'。', detached: true },
+    ],
+  },
+
+  3: {
+    label: 'L.03', jp: '3階', en: 'SECOND-YEAR / FACULTY',
+    rooms: [
+      // Center: Faculty office (45° big diamond, replaces LINKS void)
+      { id:'staff',  cx: 2.0,  cz: 2.0,  w: 4.4, d: 4.4, rot: 45, cat:'office', jp:'職員室', en:'Faculty Office', desc:'' },
+
+      // East edge: library + support + 2-1〜2-4
+      { id:'lib',    cx: 7.5,  cz: -3.6, w: 1.7, d: 1.4, rot: 0, cat:'library',  jp:'図書室', en:'Library', desc:'。' },
+      { id:'sup',    cx: 7.5,  cz: -2.0, w: 1.7, d: 1.4, rot: 0, cat:'service',  jp:'生徒支援室', en:'Student Support', desc:'' },
+      { id:'2-1',    cx: 7.5,  cz: -0.4, w: 1.7, d: 1.4, rot: 0, cat:'classroom', jp:'2年1組', en:'Class 2-1', desc:'2-1 : ' },
+      { id:'2-2',    cx: 7.5,  cz:  1.2, w: 1.7, d: 1.4, rot: 0, cat:'classroom', jp:'2年2組', en:'Class 2-2', desc:'2-2 : ' },
+      { id:'2-3',    cx: 7.5,  cz:  2.8, w: 1.7, d: 1.4, rot: 0, cat:'classroom', jp:'2年3組', en:'Class 2-3', desc:'2-3 : ' },
+      { id:'2-4',    cx: 7.5,  cz:  4.4, w: 1.7, d: 1.4, rot: 0, cat:'classroom', jp:'2年4組', en:'Class 2-4', desc:'2-4 : ' },
+
+      // Multimedia (small diamond, east of staff room)
+      { id:'multi',  cx: 5.5,  cz: -1.5, w: 1.4, d: 1.4, rot: 45, cat:'special', jp:'マルチメディア教室', en:'Multimedia Room', desc:'' },
+
+      // Career support (small diamond, west of staff)
+      { id:'career', cx: -2.5, cz:  4.0, w: 1.5, d: 1.5, rot: 45, cat:'office', jp:'進路支援室', en:'Career Support', desc:'' },
+
+      // South edge: 音楽室 + 2-8〜2-5 + S-5
+      { id:'music',  cx: -2.5, cz:  6.7, w: 1.5, d: 1.0, rot: 0, cat:'special',   jp:'音楽室', en:'Music Room', desc:'' },
+      { id:'2-8',    cx: -1.0, cz:  6.7, w: 1.0, d: 1.0, rot: 0, cat:'classroom', jp:'2年8組', en:'Class 2-8', desc:'2-8 : ' },
+      { id:'2-7',    cx:  0.2, cz:  6.7, w: 1.0, d: 1.0, rot: 0, cat:'classroom', jp:'2年7組', en:'Class 2-7', desc:'2-7 : ' },
+      { id:'2-6',    cx:  1.4, cz:  6.7, w: 1.0, d: 1.0, rot: 0, cat:'classroom', jp:'2年6組', en:'Class 2-6', desc:'2-6 : ' },
+      { id:'2-5',    cx:  2.6, cz:  6.7, w: 1.0, d: 1.0, rot: 0, cat:'classroom', jp:'2年5組', en:'Class 2-5', desc:'2-5 : ' },
+      { id:'s5',     cx:  3.8, cz:  6.7, w: 0.8, d: 1.0, rot: 0, cat:'stair',     jp:'S-5 階段', en:'Stair S-5', desc:'' },
+    ],
+  },
+
+  4: {
+    label: 'L.04', jp: '4階', en: 'FIRST-YEAR / TOP FLOOR',
+    rooms: [
+      // Center: Year-1 lounge
+      { id:'lounge', cx: 2.0,  cz: 2.0,  w: 4.4, d: 4.4, rot: 45, cat:'special', jp:'1年生ラウンジ', en:'Year-1 Lounge', desc:'' },
+
+      // East edge: 6 rooms (S-4 + 1-5〜1-8 + S-3)
+      { id:'s4',     cx: 7.5,  cz: -3.6, w: 1.7, d: 1.4, rot: 0, cat:'stair',     jp:'S-4 階段', en:'Stair S-4', desc:'' },
+      { id:'1-8',    cx: 7.5,  cz: -2.0, w: 1.7, d: 1.4, rot: 0, cat:'classroom', jp:'1年8組', en:'Class 1-8', desc:'1-8 : ' },
+      { id:'1-7',    cx: 7.5,  cz: -0.4, w: 1.7, d: 1.4, rot: 0, cat:'classroom', jp:'1年7組', en:'Class 1-7', desc:'1-7 : ' },
+      { id:'1-6',    cx: 7.5,  cz:  1.2, w: 1.7, d: 1.4, rot: 0, cat:'classroom', jp:'1年6組', en:'Class 1-6', desc:'1-6 : ' },
+      { id:'1-5',    cx: 7.5,  cz:  2.8, w: 1.7, d: 1.4, rot: 0, cat:'classroom', jp:'1年5組', en:'Class 1-5', desc:'1-5 : ' },
+      { id:'s3',     cx: 7.5,  cz:  4.4, w: 1.7, d: 1.4, rot: 0, cat:'stair',     jp:'S-3 階段', en:'Stair S-3', desc:'階段 S-3。' },
+
+      // Free spaces (small diamonds)
+      { id:'s2',     cx: 5.5,  cz: -1.5, w: 1.4, d: 1.4, rot: 45, cat:'special', jp:'フリースペース S-2', en:'Free Space S-2', desc:'' },
+      { id:'s1',     cx: -2.5, cz:  4.0, w: 1.5, d: 1.5, rot: 45, cat:'special', jp:'フリースペース S-1', en:'Free Space S-1', desc:'。' },
+
+      // South edge: 1-1〜1-4
+      { id:'1-1',    cx: -1.5, cz:  6.7, w: 1.2, d: 1.0, rot: 0, cat:'classroom', jp:'1年1組', en:'Class 1-1', desc:'1-1 : ' },
+      { id:'1-2',    cx:  0.0, cz:  6.7, w: 1.2, d: 1.0, rot: 0, cat:'classroom', jp:'1年2組', en:'Class 1-2', desc:'1-2 : '},
+      { id:'1-3',    cx:  1.5, cz:  6.7, w: 1.2, d: 1.0, rot: 0, cat:'classroom', jp:'1年3組', en:'Class 1-3', desc:'1-3 : ' },
+      { id:'1-4',    cx:  3.0, cz:  6.7, w: 1.2, d: 1.0, rot: 0, cat:'classroom', jp:'1年4組', en:'Class 1-4', desc:'1-4 : ' },
+    ],
+  },
+};
+
+// =============================================================
+// THREE.JS SETUP
+// =============================================================
+const canvas = document.getElementById('mapCanvas');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+const scene = new THREE.Scene();
+scene.background = null;
+scene.fog = new THREE.Fog(0xe2ecf5, 30, 80);
+
+const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 200);
+
+// Camera orbit state
+let camAzim = Math.PI * 0.20;       // around y-axis
+let camPolar = Math.PI * 0.30;      // from horizontal (lower = more top-down)
+let camDist = 26;
+const camTargetAzim = { v: camAzim };
+const camTargetPolar = { v: camPolar };
+const camTargetDist = { v: camDist };
+const camLookAt = new THREE.Vector3(2.5, 0, 0);
+
+function updateCamera() {
+  // Smooth interpolate
+  camAzim += (camTargetAzim.v - camAzim) * 0.10;
+  camPolar += (camTargetPolar.v - camPolar) * 0.10;
+  camDist += (camTargetDist.v - camDist) * 0.10;
+  const x = camLookAt.x + camDist * Math.sin(camAzim) * Math.cos(camPolar);
+  const z = camLookAt.z + camDist * Math.cos(camAzim) * Math.cos(camPolar);
+  const y = camLookAt.y + camDist * Math.sin(camPolar);
+  camera.position.set(x, y, z);
+  camera.lookAt(camLookAt);
+}
+
+function resize() {
+  const r = canvas.parentElement.getBoundingClientRect();
+  renderer.setSize(r.width, r.height, false);
+  camera.aspect = r.width / r.height;
+  camera.updateProjectionMatrix();
+}
+window.addEventListener('resize', resize);
+resize();
+
+// Lights — soft and even (reduced directional to minimize harsh shadows)
+const sun = new THREE.DirectionalLight(0xfff8f0, 0.60);
+sun.position.set(8, 18, 6);
+sun.castShadow = true;
+sun.shadow.mapSize.set(1024, 1024);
+sun.shadow.camera.left = -25;
+sun.shadow.camera.right = 25;
+sun.shadow.camera.top = 25;
+sun.shadow.camera.bottom = -25;
+sun.shadow.camera.near = 0.5;
+sun.shadow.camera.far = 50;
+sun.shadow.bias = -0.001;
+sun.shadow.radius = 4;   // softer shadow edges
+scene.add(sun);
+
+// Strong ambient so lower floors stay visible even in shadow
+scene.add(new THREE.AmbientLight(0xdde8f2, 0.65));
+scene.add(new THREE.HemisphereLight(0xfff5e1, 0xd0dff0, 0.38));
+
+// Ground plane (catches shadow)
+const groundMat = new THREE.MeshStandardMaterial({ color: 0xdde8f2, roughness: 1.0, metalness: 0.0 });
+const ground = new THREE.Mesh(new THREE.CircleGeometry(60, 64).rotateX(-Math.PI/2), groundMat);
+ground.position.y = -0.02;
+ground.receiveShadow = true;
+scene.add(ground);
+
+// Subtle grid lines
+const gridHelper = new THREE.PolarGridHelper(50, 8, 12, 64, 0xb8c5d4, 0xc4cdd9);
+gridHelper.position.y = -0.018;
+scene.add(gridHelper);
+
+// =============================================================
+// FLOOR BUILDING — each floor is a Group with all its rooms
+// =============================================================
+const FLOOR_HEIGHT = 1.0;       // each floor's slab thickness + walls + air
+const FLOOR_GAP = 1.1;          // visible gap between floors when stacked
+const SLAB_T = 0.10;            // slab thickness
+const WALL_H = 0.55;            // wall height (interior view)
+
+function buildFloor(floorNum) {
+  const data = FLOORS[floorNum];
+  const g = new THREE.Group();
+  g.userData.floorNum = floorNum;
+
+  // Slab (triangular footprint of main building)
+  // SW → NE → SE makes a right triangle with right angle at NE.
+  // Footprint forms an L-shape with a south strip extending west to (-7.0, 7.5).
+  const slabShape = new THREE.Shape();
+  slabShape.moveTo(TRI.SW.x, TRI.SW.z);
+  slabShape.lineTo(TRI.NE.x, TRI.NE.z);
+  slabShape.lineTo(TRI.SE.x, TRI.SE.z);
+  slabShape.lineTo(-7.0,    TRI.SE.z);
+  slabShape.lineTo(TRI.SW.x, TRI.SW.z);
+
+  const slabGeo = new THREE.ExtrudeGeometry(slabShape, {
+    depth: SLAB_T, bevelEnabled: true,
+    bevelThickness: 0.02, bevelSize: 0.04, bevelSegments: 2,
+  });
+  slabGeo.rotateX(Math.PI / 2);
+  const slab = new THREE.Mesh(slabGeo, new THREE.MeshStandardMaterial({
+    color: 0xfafcfe, roughness: 0.85, metalness: 0.04
+  }));
+  slab.position.y = 0;
+  slab.castShadow = true;
+  slab.receiveShadow = true;
+  g.add(slab);
+
+  // Slab outline (architectural line)
+  const outlinePts = [
+    new THREE.Vector3(TRI.SW.x, SLAB_T + 0.001, TRI.SW.z),
+    new THREE.Vector3(TRI.NE.x, SLAB_T + 0.001, TRI.NE.z),
+    new THREE.Vector3(TRI.SE.x, SLAB_T + 0.001, TRI.SE.z),
+    new THREE.Vector3(-7.0,    SLAB_T + 0.001, TRI.SE.z),
+    new THREE.Vector3(TRI.SW.x, SLAB_T + 0.001, TRI.SW.z),
+  ];
+  g.add(new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints(outlinePts),
+    new THREE.LineBasicMaterial({ color: 0x1a2438, transparent: true, opacity: 0.55 })
+  ));
+
+  // Build each room
+  const roomMeshes = [];
+  data.rooms.forEach(room => {
+    const cat = CATS[room.cat] || CATS.classroom;
+
+    // Detached rooms (gym, ground, global) get their own slab
+    if (room.detached) {
+      const dShape = new THREE.Shape();
+      const hw = room.w / 2, hd = room.d / 2;
+      dShape.moveTo(-hw, -hd);
+      dShape.lineTo( hw, -hd);
+      dShape.lineTo( hw,  hd);
+      dShape.lineTo(-hw,  hd);
+      dShape.closePath();
+      const dGeo = new THREE.ExtrudeGeometry(dShape, { depth: SLAB_T, bevelEnabled: true, bevelThickness: 0.02, bevelSize: 0.04, bevelSegments: 2 });
+      dGeo.rotateX(Math.PI / 2);
+      const dSlab = new THREE.Mesh(dGeo, new THREE.MeshStandardMaterial({
+        color: 0xfafcfe, roughness: 0.85, metalness: 0.04
+      }));
+      dSlab.position.set(room.cx, 0, room.cz);
+      if (room.rot) dSlab.rotation.y = -room.rot * Math.PI / 180;
+      dSlab.castShadow = true;
+      dSlab.receiveShadow = true;
+      g.add(dSlab);
+    }
+
+    // Room floor tile (colored)
+    const tileGeo = new THREE.BoxGeometry(room.w * 0.96, 0.03, room.d * 0.96);
+    const tile = new THREE.Mesh(tileGeo, new THREE.MeshStandardMaterial({
+      color: cat.color, roughness: 0.7, metalness: 0.04
+    }));
+    tile.position.set(room.cx, SLAB_T + 0.015, room.cz);
+    if (room.rot) tile.rotation.y = -room.rot * Math.PI / 180;
+    tile.receiveShadow = true;
+    tile.userData.room = room;
+    tile.userData.floorNum = floorNum;
+    g.add(tile);
+    roomMeshes.push(tile);
+
+    // Walls — 4 perimeter segments, designed so corners meet flush (no cross-shaped overhang)
+    if (room.cat !== 'stair' && room.cat !== 'ground') {
+      const wallMat = new THREE.MeshStandardMaterial({
+        color: 0xfafcff, roughness: 0.92, metalness: 0.01
+      });
+      const trimMat = new THREE.MeshBasicMaterial({ color: 0x2d6fb5 });
+      const wallT = 0.05;
+      // North/South walls run full width; East/West walls are inset by wallT on both ends
+      const segs = [
+        // North & South walls: full width, sit on inner edge
+        { x: 0,                  z: -room.d / 2 + wallT/2, w: room.w, d: wallT },
+        { x: 0,                  z:  room.d / 2 - wallT/2, w: room.w, d: wallT },
+        // East & West walls: inset by wallT on both ends so corners are flush
+        { x: -room.w/2 + wallT/2, z: 0,                    w: wallT,  d: room.d - 2 * wallT },
+        { x:  room.w/2 - wallT/2, z: 0,                    w: wallT,  d: room.d - 2 * wallT },
+      ];
+      const rad = -(room.rot || 0) * Math.PI / 180;
+      const c = Math.cos(rad), s = Math.sin(rad);
+      segs.forEach(seg => {
+        const wallGeo = new THREE.BoxGeometry(seg.w, WALL_H, seg.d);
+        const wall = new THREE.Mesh(wallGeo, wallMat);
+        const wx = room.cx + (seg.x * c - seg.z * s);
+        const wz = room.cz + (seg.x * s + seg.z * c);
+        wall.position.set(wx, SLAB_T + WALL_H / 2 + 0.03, wz);
+        if (room.rot) wall.rotation.y = rad;
+        wall.castShadow = true;
+        wall.receiveShadow = true;
+        g.add(wall);
+
+        // Top trim (subtle blue line, sized to wall exactly to avoid cross protrusion)
+        const trim = new THREE.Mesh(
+          new THREE.BoxGeometry(seg.w, 0.012, seg.d),
+          trimMat
+        );
+        trim.position.set(wx, SLAB_T + WALL_H + 0.04, wz);
+        if (room.rot) trim.rotation.y = rad;
+        g.add(trim);
+      });
+    }
+
+    // Pin anchor point (invisible 3D point; actual card is DOM overlay built in buildPinCards)
+    const pinAnchor = new THREE.Group();
+    pinAnchor.position.set(room.cx, SLAB_T + WALL_H + 0.55, room.cz);
+    pinAnchor.userData.room = room;
+    pinAnchor.userData.floorNum = floorNum;
+    pinAnchor.userData.isPin = true;
+    g.add(pinAnchor);
+    roomMeshes.push(pinAnchor);
+  });
+
+  // Gym corridor (connects building NE to gym entry, only on floors 1 & 2)
+  if (floorNum === 1 || floorNum === 2) {
+    const corShape = new THREE.Shape();
+    // Start at NE corner of building, go east to gym
+    corShape.moveTo(TRI.NE.x, TRI.NE.z + 0.4);
+    corShape.lineTo(11.0, TRI.NE.z + 0.4);
+    corShape.lineTo(11.0, TRI.NE.z - 0.4);
+    corShape.lineTo(TRI.NE.x, TRI.NE.z - 0.4);
+    corShape.closePath();
+    const corGeo = new THREE.ExtrudeGeometry(corShape, { depth: SLAB_T, bevelEnabled: false });
+    corGeo.rotateX(Math.PI / 2);
+    const cor = new THREE.Mesh(corGeo, new THREE.MeshStandardMaterial({
+      color: 0xeaf2fa, roughness: 0.9, metalness: 0.02
+    }));
+    cor.castShadow = true;
+    cor.receiveShadow = true;
+    g.add(cor);
+  }
+
+  // Pickable mesh references
+  g.userData.pickables = roomMeshes;
+
+  return g;
+}
+
+// =============================================================
+// SCENE BUILD
+// =============================================================
+const floorGroups = {};
+const allFloors = new THREE.Group();
+scene.add(allFloors);
+
+[1, 2, 3, 4].forEach(n => {
+  const fg = buildFloor(n);
+  floorGroups[n] = fg;
+  allFloors.add(fg);
+});
+
+let currentFloor = 1;
+
+// =============================================================
+// CSS2D PIN CARDS — project 3D anchor positions onto screen
+// =============================================================
+const labelHost = document.getElementById('labelHost');
+const pinCardEls = new Map(); // key = room.id, val = {el, anchor3d}
+let selectedPinId = null;
+
+const CAT_ICONS = {
+  hall:      '🎭', classroom: '🎓', lab: '🔬',
+  special:   '✨', office:    '🏢', library:  '📚',
+  service:   '🏥', stair:     '🪜', gym:      '🏀',
+  ground:    '⛳',
+};
+
+function buildPinCards(floorNum) {
+  // Remove old cards
+  pinCardEls.forEach(({ el }) => el.remove());
+  pinCardEls.clear();
+
+  const data = FLOORS[floorNum];
+  const fg = floorGroups[floorNum];
+
+  data.rooms.forEach((room, i) => {
+    const cat = CATS[room.cat] || CATS.classroom;
+    const colorHex = '#' + cat.color.toString(16).padStart(6, '0');
+    const icon = CAT_ICONS[room.cat] || '📍';
+    const shortName = room.jp.length > 8 ? room.jp.slice(0, 7) + '…' : room.jp;
+
+    const el = document.createElement('div');
+    el.className = 'pin-card';
+    el.innerHTML = `
+      <div class="pc-inner">
+        <div class="pc-head" style="--pc-color:${colorHex}; background:${colorHex};">
+          ${icon}
+        </div>
+        <div class="pc-tail" style="border-top-color:${colorHex};"></div>
+      </div>
+    `;
+    el.style.setProperty('--pc-color', colorHex);
+    el.style.position = 'absolute';
+    el.dataset.roomId = room.id;
+
+    // Staggered gravity fall
+    setTimeout(() => {
+      el.classList.add('falling');
+    }, i * 35);
+
+    el.addEventListener('click', () => {
+      // Deselect previous
+      if (selectedPinId) {
+        const prev = labelHost.querySelector(`[data-room-id="${selectedPinId}"]`);
+        if (prev) prev.classList.remove('selected');
+      }
+      selectedPinId = room.id;
+      el.classList.add('selected');
+      openDetail(room);
+    });
+
+    labelHost.appendChild(el);
+
+    // Find the 3D anchor in the floor group
+    let anchor3d = null;
+    fg.children.forEach(c => {
+      if (c.userData && c.userData.isPin && c.userData.room && c.userData.room.id === room.id) {
+        anchor3d = c;
+      }
+    });
+
+    pinCardEls.set(room.id, { el, anchor3d, room });
+  });
+}
+
+function updatePinCardPositions() {
+  const r = canvas.getBoundingClientRect();
+  const w = r.width, h = r.height;
+  const fg = floorGroups[currentFloor];
+  const floorOffsetY = fg ? fg.position.y : 0;
+
+  pinCardEls.forEach(({ el, anchor3d, room }) => {
+    if (!anchor3d) {
+      el.style.display = 'none';
+      return;
+    }
+    const worldPos = new THREE.Vector3(
+      anchor3d.position.x,
+      anchor3d.position.y + floorOffsetY,
+      anchor3d.position.z
+    );
+    worldPos.project(camera);
+    // Convert NDC to CSS
+    const x = (worldPos.x * 0.5 + 0.5) * w;
+    const y = (-worldPos.y * 0.5 + 0.5) * h;
+    // Cull if behind camera
+    if (worldPos.z > 1) { el.style.display = 'none'; return; }
+    el.style.display = '';
+    el.style.left = x + 'px';
+    el.style.top  = y + 'px';
+  });
+}
+
+// =============================================================
+// GRAVITY FALL FLOOR TRANSITION
+// =============================================================
+const floorFlash = document.getElementById('floorFlash');
+const floorScan  = document.getElementById('floorScan');
+
+function triggerFloorTransition(cb) {
+  // 1. Flash
+  floorFlash.classList.add('on');
+  setTimeout(() => floorFlash.classList.remove('on'), 80);
+
+  // 2. Scan line
+  floorScan.classList.remove('scanning');
+  void floorScan.offsetWidth; // reflow
+  floorScan.classList.add('scanning');
+
+  // 3. Execute after short delay (mid-scan)
+  setTimeout(() => {
+    cb();
+    floorScan.classList.remove('scanning');
+  }, 180);
+}
+
+// =============================================================
+// FLOOR DISPLAY MODE
+// =============================================================
+function applyFloorDisplay() {
+  Object.entries(floorGroups).forEach(([k, g]) => {
+    const num = parseInt(k);
+    const isActive = num === currentFloor;
+    const offset = (num - currentFloor);
+    const targetY = offset * (SLAB_T + WALL_H + FLOOR_GAP);
+    g.position.y = targetY;
+
+    g.traverse(obj => {
+      if (obj.isMesh) {
+        if (!obj.material._origOpacity) {
+          obj.material._origOpacity = obj.material.opacity ?? 1.0;
+          obj.material._origTransparent = obj.material.transparent;
+        }
+        if (isActive) {
+          obj.material.opacity = obj.material._origOpacity;
+          obj.material.transparent = obj.material._origTransparent;
+          obj.visible = true;
+          obj.castShadow = obj.userData.origCastShadow ?? obj.castShadow;
+          obj.receiveShadow = true;
+        } else {
+          obj.material.transparent = true;
+          obj.material.opacity = 0.04;
+          obj.visible = true;
+          obj.castShadow = false;      // 非アクティブは影を落とさない
+          obj.receiveShadow = false;   // 非アクティブは影を受けない
+        }
+        obj.material.needsUpdate = true;
+      } else if (obj.isLine) {
+        if (!obj.material._origOpacity) obj.material._origOpacity = obj.material.opacity ?? 1.0;
+        obj.material.opacity = isActive ? obj.material._origOpacity : 0.03;
+        obj.material.needsUpdate = true;
+      }
+    });
+  });
+}
+
+// =============================================================
+// INTERACTION
+// =============================================================
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2();
+const tip = document.getElementById('tip');
+let hoveredPin = null;
+
+function onPointerMove(ev) {
+  if (isDragging) return;
+  const r = canvas.getBoundingClientRect();
+  pointer.x = ((ev.clientX - r.left) / r.width) * 2 - 1;
+  pointer.y = -((ev.clientY - r.top) / r.height) * 2 + 1;
+  raycaster.setFromCamera(pointer, camera);
+  // Only pick from active floor
+  const pickables = floorGroups[currentFloor].userData.pickables || [];
+  const candidates = [];
+  pickables.forEach(m => {
+    m.traverse(o => { if (o.isMesh) candidates.push(o); });
+  });
+  const hits = raycaster.intersectObjects(candidates, false);
+  if (hits.length > 0) {
+    const obj = hits[0].object;
+    let pinObj = obj;
+    while (pinObj && !pinObj.userData.room) pinObj = pinObj.parent;
+    if (pinObj && pinObj.userData.room) {
+      const room = pinObj.userData.room;
+      tip.innerHTML = `<div class="tip-cat">${(CATS[room.cat]||{}).jp || ''}</div>${room.jp}`;
+      tip.style.left = (ev.clientX + 12) + 'px';
+      tip.style.top = (ev.clientY + 8) + 'px';
+      tip.classList.add('show');
+      canvas.style.cursor = 'pointer';
+      return;
+    }
+  }
+  tip.classList.remove('show');
+  canvas.style.cursor = isDragging ? 'grabbing' : 'grab';
+}
+
+function onClick(ev) {
+  if (didDrag) return;  // ignore click after drag
+  const r = canvas.getBoundingClientRect();
+  pointer.x = ((ev.clientX - r.left) / r.width) * 2 - 1;
+  pointer.y = -((ev.clientY - r.top) / r.height) * 2 + 1;
+  raycaster.setFromCamera(pointer, camera);
+  const pickables = floorGroups[currentFloor].userData.pickables || [];
+  const candidates = [];
+  pickables.forEach(m => {
+    m.traverse(o => { if (o.isMesh) candidates.push(o); });
+  });
+  const hits = raycaster.intersectObjects(candidates, false);
+  if (hits.length > 0) {
+    let obj = hits[0].object;
+    while (obj && !obj.userData.room) obj = obj.parent;
+    if (obj && obj.userData.room) {
+      openDetail(obj.userData.room);
+    }
+  }
+}
+
+canvas.addEventListener('mousemove', onPointerMove);
+canvas.addEventListener('click', onClick);
+
+// Drag/orbit
+let isDragging = false;
+let didDrag = false;
+let dragStartX = 0, dragStartY = 0;
+let dragStartAzim = 0, dragStartPolar = 0;
+
+canvas.addEventListener('mousedown', e => {
+  isDragging = true; didDrag = false;
+  dragStartX = e.clientX; dragStartY = e.clientY;
+  dragStartAzim = camTargetAzim.v;
+  dragStartPolar = camTargetPolar.v;
+  canvas.style.cursor = 'grabbing';
+});
+window.addEventListener('mousemove', e => {
+  if (!isDragging) return;
+  const dx = e.clientX - dragStartX;
+  const dy = e.clientY - dragStartY;
+  if (Math.abs(dx) + Math.abs(dy) > 4) didDrag = true;
+  camTargetAzim.v = dragStartAzim - dx * 0.005;
+  camTargetPolar.v = Math.max(0.05, Math.min(Math.PI / 2 - 0.05, dragStartPolar + dy * 0.005));
+});
+window.addEventListener('mouseup', () => {
+  isDragging = false;
+  canvas.style.cursor = 'grab';
+});
+
+// Touch
+let touchStart = null;
+let pinchStartDist = null;
+let pinchStartCamDist = null;
+canvas.addEventListener('touchstart', e => {
+  if (e.touches.length === 1) {
+    isDragging = true; didDrag = false;
+    dragStartX = e.touches[0].clientX; dragStartY = e.touches[0].clientY;
+    dragStartAzim = camTargetAzim.v;
+    dragStartPolar = camTargetPolar.v;
+  } else if (e.touches.length === 2) {
+    isDragging = false;
+    pinchStartDist = Math.hypot(
+      e.touches[0].clientX - e.touches[1].clientX,
+      e.touches[0].clientY - e.touches[1].clientY
+    );
+    pinchStartCamDist = camTargetDist.v;
+  }
+}, { passive: true });
+canvas.addEventListener('touchmove', e => {
+  if (e.touches.length === 1 && isDragging) {
+    const dx = e.touches[0].clientX - dragStartX;
+    const dy = e.touches[0].clientY - dragStartY;
+    if (Math.abs(dx) + Math.abs(dy) > 4) didDrag = true;
+    camTargetAzim.v = dragStartAzim - dx * 0.005;
+    camTargetPolar.v = Math.max(0.05, Math.min(Math.PI / 2 - 0.05, dragStartPolar + dy * 0.005));
+  } else if (e.touches.length === 2 && pinchStartDist) {
+    const d = Math.hypot(
+      e.touches[0].clientX - e.touches[1].clientX,
+      e.touches[0].clientY - e.touches[1].clientY
+    );
+    camTargetDist.v = Math.max(8, Math.min(60, pinchStartCamDist * (pinchStartDist / d)));
+  }
+}, { passive: true });
+canvas.addEventListener('touchend', () => {
+  isDragging = false; pinchStartDist = null;
+});
+
+canvas.addEventListener('wheel', e => {
+  e.preventDefault();
+  const factor = e.deltaY > 0 ? 1.08 : 0.92;
+  camTargetDist.v = Math.max(8, Math.min(60, camTargetDist.v * factor));
+}, { passive: false });
+
+// =============================================================
+// FLOOR PILLS
+// =============================================================
+const pillsHost = document.getElementById('floorPills');
+[1, 2, 3, 4].forEach(n => {
+  const pill = document.createElement('button');
+  pill.className = 'floor-pill';
+  pill.dataset.floor = n;
+  pill.innerHTML = `<div class="fnum">${n}</div><div class="flabel">階</div>`;
+  pill.addEventListener('click', () => setFloor(n));
+  pillsHost.appendChild(pill);
+});
+
+function setFloor(n) {
+  // Trigger transition animation, then swap
+  triggerFloorTransition(() => {
+    currentFloor = n;
+    document.querySelectorAll('.floor-pill').forEach(p => p.classList.toggle('active', parseInt(p.dataset.floor) === n));
+    const data = FLOORS[n];
+    document.getElementById('floorBig').textContent = String(n).padStart(2, '0');
+    document.getElementById('counterBig').textContent = String(n).padStart(2, '0');
+    document.getElementById('floorJp').textContent = data.jp;
+    document.getElementById('floorEn').textContent = data.en;
+    document.getElementById('roomCountSm').textContent = String(data.rooms.length);
+    applyFloorDisplay();
+    buildPinCards(n);
+    renderRoomsList();
+    closeDetail();
+    selectedPinId = null;
+  });
+}
+
+// =============================================================
+// LEGEND
+// =============================================================
+const legendHost = document.getElementById('legend');
+[
+  ['hall', 'ホール'],
+  ['classroom', '教室'],
+  ['lab', '実験室'],
+  ['special', '特別'],
+  ['office', '事務'],
+  ['library', '図書'],
+  ['service', 'サービス'],
+  ['stair', '階段'],
+  ['gym', '体育館'],
+].forEach(([cat, label]) => {
+  const row = document.createElement('div');
+  row.className = 'lg-row';
+  const c = (CATS[cat] || {}).color || 0x888888;
+  row.innerHTML = `<div class="lg-dot" style="background:#${c.toString(16).padStart(6, '0')}"></div><span>${label}</span>`;
+  legendHost.appendChild(row);
+});
+
+// =============================================================
+// ROOMS LIST PANEL
+// =============================================================
+const rlp = document.getElementById('roomsList');
+const rlpBody = document.getElementById('rlpBody');
+const rlpSearch = document.getElementById('rlpSearch');
+
+function renderRoomsList() {
+  const data = FLOORS[currentFloor];
+  document.getElementById('rlpFloor').textContent = `${data.label} · ${data.jp}`;
+  document.getElementById('rlpCount').textContent = data.rooms.length;
+  const q = (rlpSearch.value || '').toLowerCase().trim();
+  const order = ['hall', 'classroom', 'lab', 'special', 'library', 'office', 'service', 'stair', 'gym', 'ground'];
+  const groups = {};
+  data.rooms.forEach(r => {
+    if (!groups[r.cat]) groups[r.cat] = [];
+    groups[r.cat].push(r);
+  });
+  let html = '';
+  let total = 0;
+  order.forEach(cat => {
+    if (!groups[cat]) return;
+    const filtered = groups[cat].filter(r => {
+      if (!q) return true;
+      return (r.jp || '').toLowerCase().includes(q) ||
+             (r.en || '').toLowerCase().includes(q) ||
+             (r.id || '').toLowerCase().includes(q);
+    });
+    if (filtered.length === 0) return;
+    total += filtered.length;
+    html += `<div class="rlp-section">${(CATS[cat]||{}).jp || cat} · ${filtered.length}</div>`;
+    filtered.forEach(r => {
+      const c = (CATS[r.cat]||{}).color || 0x888;
+      html += `<div class="rlp-item" data-id="${r.id}">
+        <div class="swatch" style="background:#${c.toString(16).padStart(6, '0')}"></div>
+        <div class="info">
+          <div class="jp">${r.jp || r.en}</div>
+          <div class="en">${r.en || ''}</div>
+        </div>
+      </div>`;
+    });
+  });
+  if (total === 0) html = `<div style="padding:40px 16px;text-align:center;color:#5a6878;font-family:'IBM Plex Sans JP';font-size:13px;">該当する部屋がありません</div>`;
+  rlpBody.innerHTML = html;
+  rlpBody.querySelectorAll('.rlp-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const r = data.rooms.find(x => x.id === item.dataset.id);
+      if (r) {
+        openDetail(r);
+        if (window.innerWidth < 700) toggleRooms(false);
+      }
+    });
+  });
+}
+function toggleRooms(force) {
+  const willOpen = typeof force === 'boolean' ? force : !rlp.classList.contains('open');
+  rlp.classList.toggle('open', willOpen);
+}
+document.getElementById('openRooms').addEventListener('click', () => toggleRooms());
+document.getElementById('rlpClose').addEventListener('click', () => toggleRooms(false));
+rlpSearch.addEventListener('input', renderRoomsList);
+
+// =============================================================
+// DETAIL PANEL — tabs: info / photos / menu / 3D
+// =============================================================
+const detail = document.getElementById('detail');
+
+// Per-room persistent data (photos, menu, models survive tab switches)
+const roomDataStore = {};
+function getRoomStore(id) {
+  if (!roomDataStore[id]) roomDataStore[id] = { photos: [], model3dUrl: null, modelName: null };
+  return roomDataStore[id];
+}
+
+// Tab switching
+document.getElementById('detailTabs').addEventListener('click', e => {
+  const btn = e.target.closest('.detail-tab');
+  if (!btn) return;
+  document.querySelectorAll('.detail-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.detail-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+});
+
+function openDetail(r) {
+  const cat = CATS[r.cat] || { jp: r.cat, color: 0x888 };
+  const colorHex = '#' + cat.color.toString(16).padStart(6, '0');
+  document.getElementById('dCat').innerHTML = `<span class="dot" style="background:${colorHex}"></span><span>${cat.jp}</span>`;
+  document.getElementById('dJp').textContent = r.jp || r.en || r.id;
+  document.getElementById('dEn').textContent = r.en || '';
+  document.getElementById('dDesc').textContent = r.desc || '—';
+
+  // Reset to info tab
+  document.querySelectorAll('.detail-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === 'info'));
+  document.querySelectorAll('.detail-panel').forEach(p => p.classList.toggle('active', p.id === 'tab-info'));
+
+  // Menu tab — render if room has menu data
+  const menuEl = document.getElementById('dMenu');
+  if (r.menu && r.menu.length > 0) {
+    const rows = r.menu.map(item =>
+      `<tr><td>${item.name}</td><td class="price">¥${item.price.toLocaleString()}</td></tr>`
+    ).join('');
+    menuEl.innerHTML = `<table><thead><tr><th>メニュー</th><th>金額</th></tr></thead><tbody>${rows}</tbody></table>`;
+    // Show menu tab indicator
+    document.querySelector('[data-tab="menu"]').textContent = `MENU (${r.menu.length})`;
+  } else {
+    menuEl.innerHTML = `<div class="detail-menu-empty">メニューがありません<br><small style="color:var(--mute);font-size:10px">room データに menu: [{name:'...', price:300}] を追加</small></div>`;
+    document.querySelector('[data-tab="menu"]').textContent = 'MENU';
+  }
+
+  // Photos tab — show stored photos for this room
+  renderPhotos(r.id);
+
+  // 3D tab — restore previous model if any
+  const store = getRoomStore(r.id);
+  if (store.model3dUrl) {
+    load3DModel(store.model3dUrl, store.modelName);
+  } else {
+    document.getElementById('d3dEmpty').style.display = 'flex';
+    const existCanvas = document.querySelector('#d3dViewer canvas');
+    if (existCanvas) existCanvas.remove();
+    if (window._3dRenderer) { window._3dRenderer.dispose(); window._3dRenderer = null; }
+  }
+
+  detail.classList.add('open');
+  detail.dataset.roomId = r.id;
+}
+
+function closeDetail() {
+  detail.classList.remove('open');
+}
+document.getElementById('detailClose').addEventListener('click', closeDetail);
+
+// ---- Photos ----
+function renderPhotos(roomId) {
+  const store = getRoomStore(roomId);
+  const el = document.getElementById('dImages');
+  if (store.photos.length === 0) {
+    el.innerHTML = `<div class="detail-img-empty">写真がありません<br>「📷 写真を追加」で追加できます</div>`;
+  } else {
+    el.innerHTML = store.photos.map((url, i) =>
+      `<div style="position:relative">
+        <img src="${url}" alt="photo ${i+1}" />
+        <button onclick="removePhoto('${roomId}',${i})" style="position:absolute;top:4px;right:4px;width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,0.55);color:#fff;border:none;cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;line-height:1">✕</button>
+      </div>`
+    ).join('');
+  }
+}
+function removePhoto(roomId, idx) {
+  getRoomStore(roomId).photos.splice(idx, 1);
+  renderPhotos(roomId);
+}
+document.getElementById('photoInput').addEventListener('change', e => {
+  const roomId = detail.dataset.roomId;
+  if (!roomId) return;
+  const store = getRoomStore(roomId);
+  Array.from(e.target.files).forEach(file => {
+    const url = URL.createObjectURL(file);
+    store.photos.push(url);
+  });
+  renderPhotos(roomId);
+  e.target.value = '';
+});
+
+// ---- 3D Model (GLB/GLTF via Three.js GLTFLoader) ----
+// Load GLTFLoader from CDN
+const gltfScript = document.createElement('script');
+gltfScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/examples/js/loaders/GLTFLoader.min.js';
+document.head.appendChild(gltfScript);
+
+document.getElementById('model3dBtn').addEventListener('click', () => {
+  document.getElementById('model3dInput').click();
+});
+document.getElementById('model3dInput').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const roomId = detail.dataset.roomId;
+  const url = URL.createObjectURL(file);
+  const store = getRoomStore(roomId);
+  // Revoke old URL
+  if (store.model3dUrl) URL.revokeObjectURL(store.model3dUrl);
+  store.model3dUrl = url;
+  store.modelName = file.name;
+  load3DModel(url, file.name);
+  e.target.value = '';
+});
+
+function load3DModel(url, name) {
+  const container = document.getElementById('d3dViewer');
+  document.getElementById('d3dEmpty').style.display = 'none';
+
+  // Dispose old renderer
+  const old = container.querySelector('canvas');
+  if (old) old.remove();
+  if (window._3dRenderer) { window._3dRenderer.dispose(); window._3dRenderer = null; }
+  if (window._3dAnimId) { cancelAnimationFrame(window._3dAnimId); window._3dAnimId = null; }
+
+  const W = container.clientWidth, H = container.clientHeight || 220;
+
+  const r3 = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  r3.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  r3.setSize(W, H);
+  r3.shadowMap.enabled = true;
+  container.appendChild(r3.domElement);
+  window._3dRenderer = r3;
+
+  const s3 = new THREE.Scene();
+  s3.background = new THREE.Color(0xf0f5fa);
+  const c3 = new THREE.PerspectiveCamera(45, W / H, 0.01, 1000);
+  c3.position.set(0, 2, 4);
+  s3.add(new THREE.AmbientLight(0xffffff, 0.8));
+  const dl = new THREE.DirectionalLight(0xffffff, 0.6);
+  dl.position.set(5, 10, 5); s3.add(dl);
+
+  // Loading indicator
+  const loadMsg = document.createElement('div');
+  loadMsg.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:JetBrains Mono,monospace;font-size:11px;color:#5a6878;pointer-events:none';
+  loadMsg.textContent = 'Loading…';
+  container.appendChild(loadMsg);
+
+  const waitForLoader = () => {
+    if (!window.THREE || !window.THREE.GLTFLoader) {
+      setTimeout(waitForLoader, 100); return;
+    }
+    const loader = new THREE.GLTFLoader();
+    loader.load(url, gltf => {
+      loadMsg.remove();
+      const model = gltf.scene;
+      // Auto-center & scale
+      const box = new THREE.Box3().setFromObject(model);
+      const size = box.getSize(new THREE.Vector3());
+      const maxDim = Math.max(size.x, size.y, size.z);
+      model.scale.multiplyScalar(2.0 / maxDim);
+      const center = box.getCenter(new THREE.Vector3());
+      model.position.sub(center.multiplyScalar(2.0 / maxDim));
+      s3.add(model);
+      c3.position.set(0, 1.5, 3);
+      c3.lookAt(0, 0, 0);
+
+      // Simple orbit on drag
+      let dragging3d = false, sx = 0, sy = 0, rotX = 0, rotY = 0;
+      r3.domElement.addEventListener('mousedown', e => { dragging3d = true; sx = e.clientX; sy = e.clientY; });
+      window.addEventListener('mousemove', e => {
+        if (!dragging3d) return;
+        rotY += (e.clientX - sx) * 0.008; rotX += (e.clientY - sy) * 0.008;
+        sx = e.clientX; sy = e.clientY;
+        model.rotation.y = rotY; model.rotation.x = Math.max(-1.2, Math.min(1.2, rotX));
+      });
+      window.addEventListener('mouseup', () => { dragging3d = false; });
+      r3.domElement.addEventListener('wheel', e => {
+        c3.position.z = Math.max(0.5, Math.min(10, c3.position.z + e.deltaY * 0.005));
+      }, { passive: true });
+
+      const loop3d = () => {
+        window._3dAnimId = requestAnimationFrame(loop3d);
+        r3.render(s3, c3);
+      };
+      loop3d();
+    }, undefined, err => {
+      loadMsg.textContent = `読み込みエラー: ${name}`;
+      console.error('GLTFLoader error:', err);
+    });
+  };
+  waitForLoader();
+}
+
+// =============================================================
+// RESET VIEW
+// =============================================================
+document.getElementById('resetView').addEventListener('click', () => {
+  camTargetAzim.v = Math.PI * 0.20;
+  camTargetPolar.v = Math.PI * 0.30;
+  camTargetDist.v = 26;
+});
+
+// =============================================================
+// ANIMATION LOOP
+// =============================================================
+function animate() {
+  requestAnimationFrame(animate);
+  updateCamera();
+  updatePinCardPositions();
+  renderer.render(scene, camera);
+}
+animate();
+
+// =============================================================
+// INIT — call setFloor directly (no transition on first load)
+// =============================================================
+currentFloor = 1;
+applyFloorDisplay();
+buildPinCards(1);
+document.querySelectorAll('.floor-pill').forEach(p => p.classList.toggle('active', parseInt(p.dataset.floor) === 1));
+const _init = FLOORS[1];
+document.getElementById('floorBig').textContent = '01';
+document.getElementById('counterBig').textContent = '01';
+document.getElementById('floorJp').textContent = _init.jp;
+document.getElementById('floorEn').textContent = _init.en;
+document.getElementById('roomCountSm').textContent = String(_init.rooms.length);
+renderRoomsList();
+
+</script>
+</body>
+</html>
